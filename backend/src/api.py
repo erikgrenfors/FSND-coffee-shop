@@ -86,30 +86,43 @@ def create_drink():
     return jsonify(out)
 
 
+@app.route('/drinks/<int:id>', methods=['PATCH'])
+@requires_auth('patch:drinks')
+def update_drink(id):
+    # Ensure only one or more of relevant body parameters (keys) are provided.
+    accepted_keys = {'title', 'recipe'}
+    body = request.get_json()
+    invalid_params = set(body.keys()) - accepted_keys
+    if len(invalid_params) != 0:
+        abort(400, "Request body must not include the parameters (keys): '{}'".format(
+            "', '".join(invalid_params)))
+
+    drink = Drink.query.get(id)
+    if drink is None:
+        abort(404)
+
+    # Change the drink attributes which are actually provided in body.
+    for key, value in body.items():
+        setattr(drink, key, value)
+
+    # Persist data in database
+    error = False
+    try:
+        drink.update()
+        out = {'success': True, 'drinks': [drink.long()]}
+    except BaseException:
+        print(sys.exc_info())
+        db.session.rollback()
+        error = True
+    finally:
+        db.session.close()
+
+    if error:
+        abort(422)
+
+    return jsonify(out)
 
 
-'''
-@TODO implement endpoint
-    POST /drinks
-        it should create a new row in the drinks table
-        it should require the 'post:drinks' permission
-        it should contain the drink.long() data representation
-    returns status code 200 and json {"success": True, "drinks": drink} where drink an array containing only the newly created drink
-        or appropriate status code indicating reason for failure
-'''
-
-
-'''
-@TODO implement endpoint
-    PATCH /drinks/<id>
-        where <id> is the existing model id
-        it should respond with a 404 error if <id> is not found
-        it should update the corresponding row for <id>
-        it should require the 'patch:drinks' permission
-        it should contain the drink.long() data representation
-    returns status code 200 and json {"success": True, "drinks": drink} where drink an array containing only the updated drink
-        or appropriate status code indicating reason for failure
-'''
 
 
 '''
