@@ -4,8 +4,9 @@ from sqlalchemy import exc
 import json
 from flask_cors import CORS
 
-from .database.models import db_drop_and_create_all, setup_db, Drink
+from .database.models import db_drop_and_create_all, setup_db, Drink, db
 from .auth.auth import AuthError, requires_auth
+import sys
 
 app = Flask(__name__)
 setup_db(app)
@@ -42,14 +43,49 @@ def get_drinks_detail():
 
     return jsonify(out)
 
-'''
-@TODO implement endpoint
-    GET /drinks-detail
-        it should require the 'get:drinks-detail' permission
-        it should contain the drink.long() data representation
-    returns status code 200 and json {"success": True, "drinks": drinks} where drinks is the list of drinks
-        or appropriate status code indicating reason for failure
-'''
+
+@app.route('/drinks', methods=['POST'])
+@requires_auth('post:drinks')
+def create_drink():
+    # print(jwt) # TODO
+    body=request.get_json()
+
+    # Ensure required body parameters (keys) are provided.
+    required_keys = {'title', 'recipe'}
+    if set(body) != required_keys:
+        abort(400, 'Request body must include the keys: "{}"'.format(
+            '", "'.join(required_keys)))
+
+    # Munge recipe value to a list in case it is a dict.
+    if isinstance(body['recipe'], dict):
+        body['recipe'] = [body['recipe']]
+
+    # Ensure required sub (recipe) parameters (keys) are provided.
+    required_keys = {'color', 'name', 'parts'}
+    for item in body['recipe']:
+        if set(item.keys()) != required_keys:
+            abort(400, 'Each recipe item must include the keys: "{}"'.format(
+                '", "'.join(required_keys)))
+
+    # Persist data in database
+    drink = Drink(title=body['title'], recipe=json.dumps(body['recipe']))
+    error = False
+    try:
+        drink.insert()
+        out = {'success': True, 'drinks': [drink.long()]}
+    except BaseException:
+        print(sys.exc_info())
+        db.session.rollback()
+        error = True
+    finally:
+        db.session.close()
+
+    if error:
+        abort(422)
+
+    return jsonify(out)
+
+
 
 
 '''
