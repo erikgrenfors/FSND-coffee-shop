@@ -56,12 +56,13 @@ def get_token_auth_header():
 
 
 def check_permissions(permission, payload):
-    raise Exception('Not Implemented')
+    if 'permissions' not in payload or permission not in payload['permissions']:
+        raise AuthError({
+            'code': 'forbidden',
+            'description': 'You are not permitted to access the requested resource.'
+        }, 403)
 
-'''
-@TODO implement verify_decode_jwt(token) method
-    @INPUTS
-        token: a json web token (string)
+    return True
 
     it should be an Auth0 token with key id (kid)
     it should verify the token using Auth0 /.well-known/jwks.json
