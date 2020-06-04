@@ -97,7 +97,7 @@ def update_drink(id):
 
     # Change the drink attributes which are actually provided in body.
     for key, value in body.items():
-        setattr(drink, key, value)
+        setattr(drink, key, json.dumps(value))
 
     # Persist data in database
     error = False
