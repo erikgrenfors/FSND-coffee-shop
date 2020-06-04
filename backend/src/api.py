@@ -13,14 +13,14 @@ app = Flask(__name__)
 setup_db(app)
 CORS(app)
 
-## ROUTES
+# ROUTES
 
 @app.route('/drinks', methods=['GET'])
 def get_drinks():
     drinks = Drink.query.all()
     out = {
-      'drinks': [drink.short() for drink in drinks],
-      'success': True
+        'drinks': [drink.short() for drink in drinks],
+        'success': True
     }
 
     return jsonify(out)
@@ -31,8 +31,8 @@ def get_drinks():
 def get_drinks_detail():
     drinks = Drink.query.all()
     out = {
-      'drinks': [drink.long() for drink in drinks],
-      'success': True
+        'drinks': [drink.long() for drink in drinks],
+        'success': True
     }
 
     return jsonify(out)
@@ -140,10 +140,10 @@ def delete_drink(id):
     if error:
         abort(422)
 
-    return jsonify({'success': True, 'delete': id })
+    return jsonify({'success': True, 'delete': id})
 
 
-## Error Handling
+# Error Handling
 
 @app.errorhandler(Exception)
 def handle_exception(error):
