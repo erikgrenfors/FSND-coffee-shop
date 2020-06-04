@@ -41,12 +41,10 @@ def get_drinks_detail():
 @app.route('/drinks', methods=['POST'])
 @requires_auth('post:drinks')
 def create_drink():
-    # print(jwt) # TODO
-    body=request.get_json()
-
-    # Ensure required body parameters (keys) are provided.
-    # Frontend for some reason include 'id', I just skip handling it (as well as
-    # other redundant keys).
+    body = request.get_json()
+    # Ensure required body parameters (keys) are provided. The frontend for
+    # some reason include 'id', I just skip handling it (as well as other
+    # redundant keys).
     required_keys = {'title', 'recipe'}
     body = {key: value for key, value in body.items() if key in required_keys}
     if len(body) != 2:
