@@ -45,8 +45,11 @@ def create_drink():
     body=request.get_json()
 
     # Ensure required body parameters (keys) are provided.
+    # Frontend for some reason include 'id', I just skip handling it (as well as
+    # other redundant keys).
     required_keys = {'title', 'recipe'}
-    if set(body) != required_keys:
+    body = {key: value for key, value in body.items() if key in required_keys}
+    if len(body) != 2:
         abort(400, 'Request body must include the keys: "{}"'.format(
             '", "'.join(required_keys)))
 
@@ -84,12 +87,14 @@ def create_drink():
 @requires_auth('patch:drinks')
 def update_drink(id):
     # Ensure only one or more of relevant body parameters (keys) are provided.
+    # Frontend for some reason include 'id' (though already in url), I just
+    # skip handling it.
     accepted_keys = {'title', 'recipe'}
     body = request.get_json()
-    invalid_params = set(body.keys()) - accepted_keys
-    if len(invalid_params) != 0:
-        abort(400, "Request body must not include the parameters (keys): '{}'".format(
-            "', '".join(invalid_params)))
+    body = {key: value for key, value in body.items() if key in accepted_keys}
+    if len(body) == 0:
+        msg = "Request body must include any of the parameters (keys): '{}'"
+        abort(400, msg.format("', '".join(invalid_params)))
 
     drink = Drink.query.get(id)
     if drink is None:
