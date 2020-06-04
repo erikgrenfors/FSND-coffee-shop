@@ -7,6 +7,7 @@ from flask_cors import CORS
 from .database.models import db_drop_and_create_all, setup_db, Drink, db
 from .auth.auth import AuthError, requires_auth
 import sys
+from werkzeug.exceptions import HTTPException
 
 app = Flask(__name__)
 setup_db(app)
@@ -145,36 +146,28 @@ def delete_drink(id):
 
     return jsonify({'success': True, 'delete': id })
 
+
 ## Error Handling
-'''
-Example error handling for unprocessable entity
-'''
-@app.errorhandler(422)
-def unprocessable(error):
-    return jsonify({
-                    "success": False, 
-                    "error": 422,
-                    "message": "unprocessable"
-                    }), 422
 
-'''
-@TODO implement error handlers using the @app.errorhandler(error) decorator
-    each error handler should return (with approprate messages):
-             jsonify({
-                    "success": False, 
-                    "error": 404,
-                    "message": "resource not found"
-                    }), 404
-
-'''
-
-'''
-@TODO implement error handler for 404
-    error handler should conform to general task above 
-'''
-
-
-'''
-@TODO implement error handler for AuthError
-    error handler should conform to general task above 
-'''
+@app.errorhandler(Exception)
+def handle_exception(error):
+    """Generically munge any HTTPException as well as AuthError to jsonified
+    dictionary - which in relation to the project specification include an
+    extra key "name" - and munge all other errors to InternalServerError (500)
+    """
+    if isinstance(error, HTTPException):
+        return jsonify({
+            "error": error.code,
+            "message": error.description,
+            "name": error.name,
+            "success": False
+        }), error.code
+    elif isinstance(error, AuthError):
+        return jsonify({
+            "error": error.status_code,
+            "message": error.error['description'],
+            "name": error.error['code'],
+            "success": False
+        }), error.status_code
+    else:
+        abort(500)
